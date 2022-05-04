@@ -1,6 +1,21 @@
 import React, { useEffect } from "react";
 
 function MicroFrontend({ name, host, history }) {
+  async function getScript(scriptId,next){
+    const response = await fetch(`${host}/asset-manifest.json`);
+    const manifest = await response.json();
+    const script = document.createElement("script");
+    script.id = scriptId;
+    script.crossOrigin = "";
+    script.src = `${host}${manifest.files["main.js"]}`;
+    script.onload = () => {
+      setTimeout(()=>{
+        next();
+      },3000)
+    };
+    document.head.appendChild(script);
+  }
+
   useEffect(() => {
     const scriptId = `micro-frontend-script-${name}`;
 
@@ -12,22 +27,8 @@ function MicroFrontend({ name, host, history }) {
       renderMicroFrontend();
       return;
     }
+    getScript(scriptId,renderMicroFrontend);
     
-    fetch(`${host}/asset-manifest.json`)
-      .then((res) => res.json())
-      .then((manifest) => {
-        const script = document.createElement("script");
-        script.id = scriptId;
-        script.crossOrigin = "";
-        script.src = `${host}${manifest.files["main.js"]}`;
-        script.onload = () => {
-          setTimeout(()=>{
-            renderMicroFrontend();
-          },3000)
-        };
-        document.head.appendChild(script);
-      });
-
     return () => {
       window[`unmount${name}`] && window[`unmount${name}`](`${name}-container`);
     };
